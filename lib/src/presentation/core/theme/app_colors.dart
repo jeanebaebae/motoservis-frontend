@@ -1,0 +1,53 @@
+import 'package:flutter/material.dart';
+
+class AppColors {
+  AppColors._();
+
+  static const Color onErrorContainer = Color(0xFF93000A);
+  static const Color primary = Color(0xFF000000);
+  static const Color outline = Color(0xFF75777E);
+  static const Color surface = Color(0xFFF7FAFC);
+  static const Color surfaceBright = Color(0xFFF7FAFC);
+  static const Color onTertiaryFixedVariant = Color(0xFF3C475A);
+  static const Color onSurfaceVariant = Color(0xFF44474D);
+  static const Color surfaceTint = Color(0xFF515F78);
+  static const Color surfaceContainerHighest = Color(0xFFE0E3E5);
+  static const Color inversePrimary = Color(0xFFB9C7E4);
+  static const Color error = Color(0xFFBA1A1A);
+  static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
+  static const Color secondary = Color(0xFFA04100);
+  static const Color tertiaryFixedDim = Color(0xFFBCC7DD);
+  static const Color onSecondary = Color(0xFFFFFFFF);
+  static const Color onSecondaryContainer = Color(0xFF572000);
+  static const Color onSecondaryFixed = Color(0xFF351000);
+  static const Color inverseSurface = Color(0xFF2D3133);
+  static const Color onPrimaryContainer = Color(0xFF76849F);
+  static const Color secondaryFixedDim = Color(0xFFFFB693);
+  static const Color tertiaryContainer = Color(0xFF111C2C);
+  static const Color onPrimaryFixedVariant = Color(0xFF39475F);
+  static const Color surfaceContainerLow = Color(0xFFF1F4F6);
+  static const Color surfaceDim = Color(0xFFD7DADC);
+  static const Color onSecondaryFixedVariant = Color(0xFF7A3000);
+  static const Color secondaryContainer = Color(0xFFFE6B00);
+  static const Color onTertiary = Color(0xFFFFFFFF);
+  static const Color onTertiaryContainer = Color(0xFF798499);
+  static const Color tertiary = Color(0xFF000000);
+  static const Color surfaceVariant = Color(0xFFE0E3E5);
+  static const Color onSurface = Color(0xFF181C1E);
+  static const Color background = Color(0xFFF7FAFC);
+  static const Color onTertiaryFixed = Color(0xFF111C2C);
+  static const Color surfaceContainer = Color(0xFFEBEEF0);
+  static const Color secondaryFixed = Color(0xFFFFDBCC);
+  static const Color onBackground = Color(0xFF181C1E);
+  static const Color onPrimaryFixed = Color(0xFF0D1C32);
+  static const Color onError = Color(0xFFFFFFFF);
+  static const Color inverseOnSurface = Color(0xFFEEF1F3);
+  static const Color primaryFixed = Color(0xFFD6E3FF);
+  static const Color primaryContainer = Color(0xFF0D1C32);
+  static const Color tertiaryFixed = Color(0xFFD8E3FA);
+  static const Color surfaceContainerHigh = Color(0xFFE5E9EB);
+  static const Color outlineVariant = Color(0xFFC5C6CD);
+  static const Color onPrimary = Color(0xFFFFFFFF);
+  static const Color errorContainer = Color(0xFFFFDAD6);
+  static const Color primaryFixedDim = Color(0xFFB9C7E4);
+}
