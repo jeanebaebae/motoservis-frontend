@@ -2,24 +2,34 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 import 'widgets/home_tab.dart';
 import 'widgets/motor_tab.dart';
+import 'widgets/moto_bottom_navigation_bar.dart';
+import 'widgets/settings_tab.dart';
 import 'widgets/servis_tab.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  const DashboardPage({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
 
   final List<Widget> _tabs = [
     const HomeTab(),
     const MotorTab(),
     const ServisTab(),
-    const Center(child: Text('Setting')),
+    const SettingsTab(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +55,10 @@ class _DashboardPageState extends State<DashboardPage> {
           IconButton(
             icon: Stack(
               children: [
-                const Icon(Icons.notifications, color: AppColors.onSurfaceVariant),
+                const Icon(
+                  Icons.notifications,
+                  color: AppColors.onSurfaceVariant,
+                ),
                 Positioned(
                   right: 2,
                   top: 2,
@@ -71,12 +84,16 @@ class _DashboardPageState extends State<DashboardPage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.surfaceContainer,
-                border: Border.all(color: AppColors.surfaceContainerHigh, width: 2),
-                image: const DecorationImage(
-                  image: NetworkImage(
+                border: Border.all(
+                  color: AppColors.surfaceContainerHigh,
+                  width: 2,
+                ),
+                image: DecorationImage(
+                  image: const NetworkImage(
                     'https://lh3.googleusercontent.com/aida-public/AB6AXuA73e2YOpEzYGqpKu3nqB5DN3bmA1oty-RVF41aoo4JWzGcaHT9STQLJUbNyiSvJH2Gf4g3Q3VRd1vIeNVgL1eLbjBv1tL5dLoFpPdhtSQk_-AL-IOZtBi8rowZ4lfcvaGj-EmnxFisMwxmTZncjDgO3ZRzFR6-l0fBs8D23ItNuw9bNIbRUw_4FMNxHOcgEbPM7yg5etMKhedG8yLnd_4LDb8JjQ-wUdDHWLzmngD0WY8OKQZG4d-OkAATPJqADnwlBO84rlJHMNIY',
                   ),
                   fit: BoxFit.cover,
+                  onError: (_, _) {},
                 ),
               ),
             ),
@@ -84,42 +101,13 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       body: _tabs[_currentIndex],
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.outlineVariant, width: 0.5),
-          ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_input_component_outlined),
-              activeIcon: Icon(Icons.settings_input_component),
-              label: 'Motor',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history_outlined),
-              activeIcon: Icon(Icons.history),
-              label: 'Servis',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings),
-              label: 'Setting',
-            ),
-          ],
-        ),
+      bottomNavigationBar: MotoBottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }
