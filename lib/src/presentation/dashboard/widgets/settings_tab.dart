@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../onboarding/onboarding_page.dart';
+import '../../profile/account_information_page.dart';
 import '../../profile/edit_profile_page.dart';
 
 class SettingsTab extends StatefulWidget {
@@ -11,6 +13,19 @@ class SettingsTab extends StatefulWidget {
 
 class _SettingsTabState extends State<SettingsTab> {
   bool _pushNotificationsEnabled = true;
+
+  void _openAccountInformation() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const AccountInformationPage()),
+    );
+  }
+
+  void _handleLogout() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const OnboardingPage()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +53,8 @@ class _SettingsTabState extends State<SettingsTab> {
             children: [
               _SettingsMenuItem(
                 icon: Icons.person_outline,
-                label: 'Detail Profil',
-                onTap: () {},
-              ),
-              _SettingsMenuItem(
-                icon: Icons.lock_outline,
-                label: 'Password',
-                onTap: () {},
+                label: 'Informasi Akun',
+                onTap: _openAccountInformation,
               ),
               _SettingsSwitchItem(
                 icon: Icons.notifications_outlined,
@@ -59,16 +69,17 @@ class _SettingsTabState extends State<SettingsTab> {
             ],
           ),
           const SizedBox(height: 32),
-          OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary, width: 2),
+          FilledButton(
+            onPressed: _handleLogout,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.onPrimary,
               padding: const EdgeInsets.symmetric(vertical: 16),
               textStyle: theme.textTheme.labelLarge,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+              elevation: 0,
               minimumSize: const Size(double.infinity, 52),
             ),
             child: const Text('Keluar'),
@@ -298,6 +309,7 @@ class _SettingsSwitchItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, color: AppColors.primary),
           const SizedBox(width: 16),
@@ -309,13 +321,25 @@ class _SettingsSwitchItem extends StatelessWidget {
               ),
             ),
           ),
-          Switch(
-            value: value,
-            activeThumbColor: AppColors.onSecondary,
-            activeTrackColor: AppColors.secondaryContainer,
-            inactiveThumbColor: AppColors.surfaceContainerLowest,
-            inactiveTrackColor: AppColors.surfaceVariant,
-            onChanged: onChanged,
+          Theme(
+            data: Theme.of(
+              context,
+            ).copyWith(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
+            child: SizedBox(
+              width: 42,
+              height: 24,
+              child: FittedBox(
+                fit: BoxFit.fill,
+                child: Switch(
+                  value: value,
+                  activeThumbColor: AppColors.onSecondary,
+                  activeTrackColor: AppColors.secondaryContainer,
+                  inactiveThumbColor: AppColors.surfaceContainerLowest,
+                  inactiveTrackColor: AppColors.surfaceVariant,
+                  onChanged: onChanged,
+                ),
+              ),
+            ),
           ),
         ],
       ),
