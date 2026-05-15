@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+
+import '../../core/constants/api_constants.dart';
+import '../../core/network/api_client.dart';
 import '../core/theme/app_colors.dart';
 
 class AddReminderPage extends StatefulWidget {
-  const AddReminderPage({super.key});
+  const AddReminderPage({
+    super.key,
+    required this.vehicleId,
+    required this.currentOdometer,
+  });
+
+  final String vehicleId;
+  final dynamic currentOdometer;
 
   @override
   State<AddReminderPage> createState() => _AddReminderPageState();
@@ -10,32 +20,66 @@ class AddReminderPage extends StatefulWidget {
 
 class _AddReminderPageState extends State<AddReminderPage> {
   final _formKey = GlobalKey<FormState>();
-  
+  final ApiClient _apiClient = ApiClient();
+
   String? _selectedServiceType;
-  final TextEditingController _intervalController = TextEditingController(text: '2000');
-  final TextEditingController _lastKmController = TextEditingController(text: '11000');
-  final TextEditingController _notifyBeforeController = TextEditingController(text: '200');
+
+  final TextEditingController _customServiceTypeController =
+      TextEditingController();
+
+  final TextEditingController _intervalController =
+      TextEditingController(text: '2000');
+
+  late final TextEditingController _lastKmController;
+
+  final TextEditingController _notifyBeforeController =
+      TextEditingController(text: '200');
+
+  bool _isLoading = false;
 
   final List<String> _serviceTypes = [
     'Oli Mesin',
     'Filter Udara',
-    'Busi',
+    'Oli Gardan',
+    'Rantai',
     'Kampas Rem',
+    'Busi',
+    'Ban',
+    'Aki',
+    'CVT',
+    'Shockbreaker',
+    'Lainnya',
   ];
 
+  int get _currentOdometer {
+    return int.tryParse(widget.currentOdometer.toString()) ?? 0;
+  }
+
   int _calculateTarget() {
-    final interval = int.tryParse(_intervalController.text) ?? 0;
-    final lastKm = int.tryParse(_lastKmController.text) ?? 0;
+    final interval = int.tryParse(_intervalController.text.trim()) ?? 0;
+    final lastKm = int.tryParse(_lastKmController.text.trim()) ?? 0;
     return lastKm + interval;
   }
 
+  String _formatKm(int value) {
+    return value.toString().replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+          (match) => '${match[1]}.',
+        );
+  }
+
   void _onInputChanged() {
-    setState(() {}); // Trigger rebuild to update calculation
+    setState(() {});
   }
 
   @override
   void initState() {
     super.initState();
+
+    _lastKmController = TextEditingController(
+      text: _currentOdometer.toString(),
+    );
+
     _intervalController.addListener(_onInputChanged);
     _lastKmController.addListener(_onInputChanged);
   }
@@ -44,53 +88,114 @@ class _AddReminderPageState extends State<AddReminderPage> {
   void dispose() {
     _intervalController.removeListener(_onInputChanged);
     _lastKmController.removeListener(_onInputChanged);
+
+    _customServiceTypeController.dispose();
     _intervalController.dispose();
     _lastKmController.dispose();
     _notifyBeforeController.dispose();
+
     super.dispose();
   }
 
-  void _saveReminder() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reminder berhasil disimpan!')),
-      );
-      Navigator.pop(context);
-    }
-  }
-
-  Widget _buildSuffixKm(ThemeData theme) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        border: Border(left: BorderSide(color: AppColors.outlineVariant)),
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(8),
-          bottomRight: Radius.circular(8),
-        ),
+  InputDecoration _inputDecoration({
+    String? hintText,
+    bool showKmSuffix = false,
+  }) {
+    return InputDecoration(
+      filled: true,
+      fillColor: AppColors.surfaceContainerLowest,
+      hintText: hintText,
+      suffixText: showKmSuffix ? 'km' : null,
+      suffixStyle: const TextStyle(
+        color: AppColors.onSurfaceVariant,
+        fontWeight: FontWeight.w500,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'km',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-        ],
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 16,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.outline),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.outline),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.primary),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.error),
       ),
     );
+  }
+
+  Future<void> _saveReminder() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final intervalKm = int.parse(_intervalController.text.trim());
+    final lastServiceKm = int.parse(_lastKmController.text.trim());
+    final notifyBeforeKm = int.parse(_notifyBeforeController.text.trim());
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _apiClient.post(
+        '${ApiConstants.baseUrl}/vehicles/${widget.vehicleId}/reminders',
+        {
+          'service_type': _selectedServiceType,
+          if (_selectedServiceType == 'Lainnya')
+            'custom_service_type': _customServiceTypeController.text.trim(),
+          'interval_km': intervalKm,
+          'last_service_km': lastServiceKm,
+          'notify_before_km': notifyBeforeKm,
+        },
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reminder berhasil disimpan!'),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst('Exception: ', ''),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final interval = int.tryParse(_intervalController.text.trim()) ?? 0;
+    final lastKm = int.tryParse(_lastKmController.text.trim()) ?? 0;
     final targetKm = _calculateTarget();
-    final interval = int.tryParse(_intervalController.text) ?? 0;
-    final lastKm = int.tryParse(_lastKmController.text) ?? 0;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -98,7 +203,7 @@ class _AddReminderPageState extends State<AddReminderPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           color: AppColors.onSurface,
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
         title: Text(
           'Tambah Reminder',
@@ -117,7 +222,12 @@ class _AddReminderPageState extends State<AddReminderPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 24, left: 20, right: 20, bottom: 40),
+        padding: const EdgeInsets.only(
+          top: 24,
+          left: 20,
+          right: 20,
+          bottom: 40,
+        ),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
@@ -126,142 +236,170 @@ class _AddReminderPageState extends State<AddReminderPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Jenis Servis
-                  Text('Jenis Servis', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.onSurfaceVariant)),
+                  Text(
+                    'Jenis Servis',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     value: _selectedServiceType,
-                    icon: const Icon(Icons.expand_more, color: AppColors.outline),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.surfaceContainerLowest,
+                    icon: const Icon(
+                      Icons.expand_more,
+                      color: AppColors.outline,
+                    ),
+                    decoration: _inputDecoration(
                       hintText: 'Pilih jenis...',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outline),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outline),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.primary),
-                      ),
                     ),
                     items: _serviceTypes.map((String type) {
                       return DropdownMenuItem(
                         value: type,
-                        child: Text(type, style: theme.textTheme.bodyMedium),
+                        child: Text(
+                          type,
+                          style: theme.textTheme.bodyMedium,
+                        ),
                       );
                     }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedServiceType = value;
-                      });
+                    onChanged: _isLoading
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _selectedServiceType = value;
+                            });
+                          },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Pilih jenis servis';
+                      }
+                      return null;
                     },
-                    validator: (value) => value == null ? 'Pilih jenis servis' : null,
                   ),
+
+                  if (_selectedServiceType == 'Lainnya') ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Jenis Servis Custom',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: _customServiceTypeController,
+                      enabled: !_isLoading,
+                      decoration: _inputDecoration(
+                        hintText: 'Contoh: Servis CVT',
+                      ),
+                      validator: (value) {
+                        if (_selectedServiceType == 'Lainnya' &&
+                            (value == null || value.trim().isEmpty)) {
+                          return 'Jenis servis custom wajib diisi';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+
                   const SizedBox(height: 16),
 
-                  // Interval Servis
-                  Text('Interval Servis', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.onSurfaceVariant)),
+                  Text(
+                    'Interval Servis',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _intervalController,
+                    enabled: !_isLoading,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.surfaceContainerLowest,
-                      suffixIcon: _buildSuffixKm(theme),
-                      contentPadding: const EdgeInsets.only(left: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outline),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outline),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.primary),
-                      ),
+                    decoration: _inputDecoration(
+                      showKmSuffix: true,
                     ),
                     style: theme.textTheme.bodyMedium,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Masukkan interval servis';
+                      final number = int.tryParse(value ?? '');
+
+                      if (number == null) {
+                        return 'Interval servis harus angka';
+                      }
+
+                      if (number <= 0) {
+                        return 'Interval servis harus lebih dari 0';
+                      }
+
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
 
-                  // KM Servis Terakhir
-                  Text('KM Servis Terakhir', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.onSurfaceVariant)),
+                  Text(
+                    'KM Servis Terakhir',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _lastKmController,
+                    enabled: !_isLoading,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.surfaceContainerLowest,
-                      suffixIcon: _buildSuffixKm(theme),
-                      contentPadding: const EdgeInsets.only(left: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outline),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outline),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.primary),
-                      ),
+                    decoration: _inputDecoration(
+                      showKmSuffix: true,
                     ),
                     style: theme.textTheme.bodyMedium,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Masukkan KM servis terakhir';
+                      final number = int.tryParse(value ?? '');
+
+                      if (number == null) {
+                        return 'KM servis terakhir harus angka';
+                      }
+
+                      if (number < 0) {
+                        return 'KM servis terakhir tidak boleh negatif';
+                      }
+
+                      if (number > _currentOdometer) {
+                        return 'KM servis terakhir tidak boleh lebih besar dari odometer sekarang';
+                      }
+
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
 
-                  // Notifikasi Sebelum
-                  Text('Notifikasi Sebelum', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.onSurfaceVariant)),
+                  Text(
+                    'Notifikasi Sebelum',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _notifyBeforeController,
+                    enabled: !_isLoading,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.surfaceContainerLowest,
-                      suffixIcon: _buildSuffixKm(theme),
-                      contentPadding: const EdgeInsets.only(left: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outline),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outline),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.primary),
-                      ),
+                    decoration: _inputDecoration(
+                      showKmSuffix: true,
                     ),
                     style: theme.textTheme.bodyMedium,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Masukkan notifikasi sebelum';
+                      final number = int.tryParse(value ?? '');
+
+                      if (number == null) {
+                        return 'Notifikasi sebelum harus angka';
+                      }
+
+                      if (number < 0) {
+                        return 'Notifikasi sebelum tidak boleh negatif';
+                      }
+
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
 
-                  // Calculation Component
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -279,7 +417,10 @@ class _AddReminderPageState extends State<AddReminderPage> {
                             color: AppColors.primaryFixed,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.calculate, color: AppColors.onPrimaryFixed),
+                          child: const Icon(
+                            Icons.calculate,
+                            color: AppColors.onPrimaryFixed,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -298,14 +439,15 @@ class _AddReminderPageState extends State<AddReminderPage> {
                                 spacing: 8,
                                 children: [
                                   Text(
-                                    lastKm.toString(),
-                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                    _formatKm(lastKm),
+                                    style:
+                                        theme.textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.primary,
                                     ),
                                   ),
                                   Text(
-                                    '+ ${interval.toString()}',
+                                    '+ ${_formatKm(interval)}',
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: AppColors.outline,
                                     ),
@@ -320,15 +462,17 @@ class _AddReminderPageState extends State<AddReminderPage> {
                                     text: TextSpan(
                                       children: [
                                         TextSpan(
-                                          text: targetKm.toString(),
-                                          style: theme.textTheme.headlineSmall?.copyWith(
+                                          text: _formatKm(targetKm),
+                                          style: theme.textTheme.headlineSmall
+                                              ?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.primary,
                                           ),
                                         ),
                                         TextSpan(
                                           text: ' km',
-                                          style: theme.textTheme.labelMedium?.copyWith(
+                                          style: theme.textTheme.labelMedium
+                                              ?.copyWith(
                                             color: AppColors.onSurfaceVariant,
                                             fontWeight: FontWeight.normal,
                                           ),
@@ -346,24 +490,36 @@ class _AddReminderPageState extends State<AddReminderPage> {
                   ),
                   const SizedBox(height: 40),
 
-                  // Primary Action Button
                   ElevatedButton(
-                    onPressed: _saveReminder,
+                    onPressed: _isLoading ? null : _saveReminder,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.onPrimary,
+                      disabledBackgroundColor:
+                          AppColors.primary.withValues(alpha: 0.6),
+                      disabledForegroundColor:
+                          AppColors.onPrimary.withValues(alpha: 0.8),
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(100),
                       ),
                       elevation: 2,
                     ),
-                    child: Text(
-                      'Simpan Reminder',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: AppColors.onPrimary,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.onPrimary,
+                            ),
+                          )
+                        : Text(
+                            'Simpan Reminder',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: AppColors.onPrimary,
+                            ),
+                          ),
                   ),
                 ],
               ),

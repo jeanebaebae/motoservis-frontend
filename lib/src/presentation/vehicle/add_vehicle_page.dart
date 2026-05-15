@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../core/constants/api_constants.dart';
+import '../../core/network/api_client.dart';
 import '../core/theme/app_colors.dart';
 
 class AddVehiclePage extends StatefulWidget {
@@ -10,15 +13,36 @@ class AddVehiclePage extends StatefulWidget {
 
 class _AddVehiclePageState extends State<AddVehiclePage> {
   final _formKey = GlobalKey<FormState>();
-  
+  final ApiClient _apiClient = ApiClient();
+
+  bool _isLoading = false;
+
   String? _alias;
   String? _brand;
   String? _year;
   String? _plate;
   String? _odometer;
 
-  final List<String> _brands = ['Honda', 'Yamaha', 'Suzuki', 'Kawasaki', 'Vespa'];
-  final List<String> _years = ['2024', '2023', '2022', '2021', '2020'];
+  final List<String> _brands = [
+    'Honda',
+    'Yamaha',
+    'Suzuki',
+    'Kawasaki',
+    'Vespa',
+  ];
+
+  final List<String> _years = [
+    '2024',
+    '2023',
+    '2022',
+    '2021',
+    '2020',
+    '2019',
+    '2018',
+    '2017',
+    '2016',
+    '2015',
+  ];
 
   InputDecoration _buildInputDecoration(String labelText, {Widget? prefixIcon}) {
     return InputDecoration(
@@ -44,18 +68,59 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: AppColors.error),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
     );
   }
 
-  void _saveVehicle() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      // Handle save logic here
-      debugPrint('Saved: $_alias, $_brand, $_year, $_plate, $_odometer');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kendaraan berhasil disimpan!')),
+  Future<void> _saveVehicle() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    _formKey.currentState!.save();
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _apiClient.post(
+        '${ApiConstants.baseUrl}/vehicles',
+        {
+          'name': _alias!.trim(),
+          'brand': _brand,
+          'year': int.parse(_year!),
+          'plate_number': _plate!.trim().toUpperCase(),
+          'current_odometer': int.parse(_odometer!),
+        },
       );
-      Navigator.pop(context);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kendaraan berhasil disimpan!'),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst('Exception: ', ''),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -69,7 +134,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           color: AppColors.primary,
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
         title: Text(
           'Tambah Kendaraan',
@@ -88,7 +153,12 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 24, left: 20, right: 20, bottom: 40),
+        padding: const EdgeInsets.only(
+          top: 24,
+          left: 20,
+          right: 20,
+          bottom: 40,
+        ),
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLowest,
@@ -115,11 +185,11 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                
-                // Nama Alias
+
                 Text('Nama Alias', style: theme.textTheme.labelLarge),
                 const SizedBox(height: 4),
                 TextFormField(
+                  enabled: !_isLoading,
                   decoration: _buildInputDecoration('Contoh: Motor Harian'),
                   style: theme.textTheme.bodyMedium,
                   validator: (value) {
@@ -132,7 +202,6 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Grid for Merek and Tahun
                 Row(
                   children: [
                     Expanded(
@@ -146,15 +215,25 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                             items: _brands.map((String brand) {
                               return DropdownMenuItem(
                                 value: brand,
-                                child: Text(brand, style: theme.textTheme.bodyMedium),
+                                child: Text(
+                                  brand,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
                               );
                             }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _brand = value;
-                              });
+                            onChanged: _isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _brand = value;
+                                    });
+                                  },
+                            validator: (value) {
+                              if (value == null) {
+                                return 'Pilih merek';
+                              }
+                              return null;
                             },
-                            validator: (value) => value == null ? 'Pilih merek' : null,
                             onSaved: (value) => _brand = value,
                           ),
                         ],
@@ -172,15 +251,25 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                             items: _years.map((String year) {
                               return DropdownMenuItem(
                                 value: year,
-                                child: Text(year, style: theme.textTheme.bodyMedium),
+                                child: Text(
+                                  year,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
                               );
                             }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _year = value;
-                              });
+                            onChanged: _isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _year = value;
+                                    });
+                                  },
+                            validator: (value) {
+                              if (value == null) {
+                                return 'Pilih tahun';
+                              }
+                              return null;
                             },
-                            validator: (value) => value == null ? 'Pilih tahun' : null,
                             onSaved: (value) => _year = value,
                           ),
                         ],
@@ -190,10 +279,10 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Nomor Plat
                 Text('Nomor Plat', style: theme.textTheme.labelLarge),
                 const SizedBox(height: 4),
                 TextFormField(
+                  enabled: !_isLoading,
                   decoration: _buildInputDecoration('B 1234 ABC'),
                   style: theme.textTheme.bodyMedium,
                   textCapitalization: TextCapitalization.characters,
@@ -207,13 +296,19 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Odometer
-                Text('Odometer Saat Ini (KM)', style: theme.textTheme.labelLarge),
+                Text(
+                  'Odometer Saat Ini (KM)',
+                  style: theme.textTheme.labelLarge,
+                ),
                 const SizedBox(height: 4),
                 TextFormField(
+                  enabled: !_isLoading,
                   decoration: _buildInputDecoration(
                     '12000',
-                    prefixIcon: const Icon(Icons.speed, color: AppColors.onSurfaceVariant),
+                    prefixIcon: const Icon(
+                      Icons.speed,
+                      color: AppColors.onSurfaceVariant,
+                    ),
                   ),
                   style: theme.textTheme.bodyMedium,
                   keyboardType: TextInputType.number,
@@ -221,9 +316,17 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Odometer tidak boleh kosong';
                     }
-                    if (int.tryParse(value) == null) {
+
+                    final odometer = int.tryParse(value);
+
+                    if (odometer == null) {
                       return 'Odometer harus berupa angka';
                     }
+
+                    if (odometer < 0) {
+                      return 'Odometer tidak boleh negatif';
+                    }
+
                     return null;
                   },
                   onSaved: (value) => _odometer = value,
@@ -240,13 +343,16 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 const Divider(color: AppColors.outlineVariant),
                 const SizedBox(height: 16),
 
-                // Action Button
                 ElevatedButton(
-                  onPressed: _saveVehicle,
+                  onPressed: _isLoading ? null : _saveVehicle,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.tertiaryContainer,
                     foregroundColor: AppColors.onTertiary,
-                    minimumSize: const Size(double.infinity, 56), // match HTML py-md which is around 56 total height or similar, 48+ usually
+                    disabledBackgroundColor:
+                        AppColors.tertiaryContainer.withValues(alpha: 0.6),
+                    disabledForegroundColor:
+                        AppColors.onTertiary.withValues(alpha: 0.8),
+                    minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -255,10 +361,20 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.save, size: 20),
+                      if (_isLoading)
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.onTertiary,
+                          ),
+                        )
+                      else
+                        const Icon(Icons.save, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'Simpan Kendaraan',
+                        _isLoading ? 'Menyimpan...' : 'Simpan Kendaraan',
                         style: theme.textTheme.labelLarge?.copyWith(
                           color: AppColors.onTertiary,
                         ),

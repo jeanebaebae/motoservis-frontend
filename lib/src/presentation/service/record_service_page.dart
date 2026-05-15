@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
+
+import '../../core/constants/api_constants.dart';
+import '../../core/network/api_client.dart';
 import '../core/theme/app_colors.dart';
 
 class RecordServicePage extends StatefulWidget {
-  const RecordServicePage({super.key});
+  const RecordServicePage({
+    super.key,
+    required this.vehicleId,
+    required this.reminderId,
+    required this.vehicleName,
+    required this.serviceType,
+    required this.currentOdometer,
+  });
+
+  final String vehicleId;
+  final String reminderId;
+  final String vehicleName;
+  final String serviceType;
+  final dynamic currentOdometer;
 
   @override
   State<RecordServicePage> createState() => _RecordServicePageState();
@@ -10,30 +26,51 @@ class RecordServicePage extends StatefulWidget {
 
 class _RecordServicePageState extends State<RecordServicePage> {
   final _formKey = GlobalKey<FormState>();
+  final ApiClient _apiClient = ApiClient();
 
-  String _selectedServiceType = 'Oli Mesin';
-  DateTime _selectedDate = DateTime.now();
-  final TextEditingController _odometerController = TextEditingController(text: '12450');
-  final TextEditingController _costController = TextEditingController(text: '85000');
-  final TextEditingController _notesController = TextEditingController(text: 'Bengkel Pak Budi, ganti oli AHM 10W40');
+  late DateTime _selectedDate;
+  late TextEditingController _odometerController;
+  final TextEditingController _workshopController = TextEditingController();
+  final TextEditingController _costController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
 
-  final List<String> _serviceTypes = [
-    'Oli Mesin',
-    'Oli Gardan',
-    'Filter Udara',
-    'CVT',
-    'V-Belt',
-    'Kampas Rem',
-    'Roller'
-  ];
+  bool _isLoading = false;
 
   final List<String> _monthNames = [
-    '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    '',
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _selectedDate = DateTime.now();
+    _odometerController = TextEditingController(
+      text: widget.currentOdometer.toString(),
+    );
+  }
 
   String _formatDate(DateTime date) {
     return '${date.day} ${_monthNames[date.month]} ${date.year}';
+  }
+
+  String _formatDateForApi(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+
+    return '${date.year}-$month-$day';
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -41,7 +78,7 @@ class _RecordServicePageState extends State<RecordServicePage> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -55,6 +92,7 @@ class _RecordServicePageState extends State<RecordServicePage> {
         );
       },
     );
+
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
@@ -62,22 +100,110 @@ class _RecordServicePageState extends State<RecordServicePage> {
     }
   }
 
-  void _saveRecord() {
-    if (_formKey.currentState!.validate()) {
-      debugPrint('Saved: $_selectedServiceType, ${_formatDate(_selectedDate)}, ${_odometerController.text}, ${_costController.text}, ${_notesController.text}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Catatan servis berhasil disimpan!')),
+  Future<void> _saveRecord() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final odometerAtService = int.parse(_odometerController.text.trim());
+
+    final costText = _costController.text.trim();
+    final int? cost = costText.isEmpty ? null : int.parse(costText);
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _apiClient.post(
+        '${ApiConstants.baseUrl}/vehicles/${widget.vehicleId}/history',
+        {
+          'reminder_id': widget.reminderId,
+          'service_type': widget.serviceType,
+          'service_date': _formatDateForApi(_selectedDate),
+          'odometer_at_service': odometerAtService,
+          'workshop_name': _workshopController.text.trim().isEmpty
+              ? null
+              : _workshopController.text.trim(),
+          'cost': cost,
+          'notes': _notesController.text.trim().isEmpty
+              ? null
+              : _notesController.text.trim(),
+        },
       );
-      Navigator.pop(context);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Catatan servis berhasil disimpan!'),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst('Exception: ', ''),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   void dispose() {
     _odometerController.dispose();
+    _workshopController.dispose();
     _costController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  InputDecoration _inputDecoration({
+    Widget? prefixIcon,
+    String? suffixText,
+    String? hintText,
+  }) {
+    return InputDecoration(
+      filled: true,
+      fillColor: AppColors.surfaceContainerLowest,
+      hintText: hintText,
+      prefixIcon: prefixIcon,
+      suffixText: suffixText,
+      suffixStyle: const TextStyle(
+        color: AppColors.outline,
+        fontWeight: FontWeight.w500,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.outlineVariant),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.primary),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+    );
   }
 
   @override
@@ -90,7 +216,7 @@ class _RecordServicePageState extends State<RecordServicePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           color: AppColors.onSurface,
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
         title: Text(
           'Catat Servis',
@@ -110,10 +236,14 @@ class _RecordServicePageState extends State<RecordServicePage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 24, left: 20, right: 20, bottom: 40),
+        padding: const EdgeInsets.only(
+          top: 24,
+          left: 20,
+          right: 20,
+          bottom: 40,
+        ),
         child: Column(
           children: [
-            // Context Card: Vehicle Information
             Container(
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerLowest,
@@ -130,7 +260,6 @@ class _RecordServicePageState extends State<RecordServicePage> {
               clipBehavior: Clip.antiAlias,
               child: Stack(
                 children: [
-                  // Left Accent Bar
                   Positioned(
                     left: 0,
                     top: 0,
@@ -139,7 +268,12 @@ class _RecordServicePageState extends State<RecordServicePage> {
                     child: Container(color: AppColors.tertiaryContainer),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, top: 16, bottom: 16, right: 16),
+                    padding: const EdgeInsets.only(
+                      left: 20,
+                      top: 16,
+                      bottom: 16,
+                      right: 16,
+                    ),
                     child: Row(
                       children: [
                         Container(
@@ -149,7 +283,10 @@ class _RecordServicePageState extends State<RecordServicePage> {
                             color: AppColors.surfaceContainer,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.two_wheeler, color: AppColors.onSurfaceVariant),
+                          child: const Icon(
+                            Icons.two_wheeler,
+                            color: AppColors.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -163,7 +300,7 @@ class _RecordServicePageState extends State<RecordServicePage> {
                                 ),
                               ),
                               Text(
-                                'Vario 160 Harian',
+                                widget.vehicleName,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.onSurface,
@@ -171,10 +308,6 @@ class _RecordServicePageState extends State<RecordServicePage> {
                               ),
                             ],
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.swap_horiz, color: AppColors.primary),
-                          onPressed: () {},
                         ),
                       ],
                     ),
@@ -184,70 +317,49 @@ class _RecordServicePageState extends State<RecordServicePage> {
             ),
             const SizedBox(height: 24),
 
-            // Service Log Form
             Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Jenis Servis
-                  Text('Jenis Servis', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.onSurfaceVariant)),
+                  Text(
+                    'Jenis Servis',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedServiceType,
-                    icon: const Icon(Icons.expand_more, color: AppColors.outline),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.surfaceContainerLowest,
-                      prefixIcon: const Icon(Icons.build, color: AppColors.outline),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outlineVariant),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outlineVariant),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.primary),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: widget.serviceType,
+                    decoration: _inputDecoration(
+                      prefixIcon: const Icon(
+                        Icons.build,
+                        color: AppColors.outline,
                       ),
                     ),
-                    items: _serviceTypes.map((String type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(type, style: theme.textTheme.bodyMedium),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        if (value != null) _selectedServiceType = value;
-                      });
-                    },
+                    style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 16),
 
-                  // Tanggal Servis
-                  Text('Tanggal Servis', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.onSurfaceVariant)),
+                  Text(
+                    'Tanggal Servis',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   GestureDetector(
-                    onTap: () => _selectDate(context),
+                    onTap: _isLoading ? null : () => _selectDate(context),
                     child: AbsorbPointer(
                       child: TextFormField(
-                        controller: TextEditingController(text: _formatDate(_selectedDate)),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppColors.surfaceContainerLowest,
-                          prefixIcon: const Icon(Icons.calendar_month, color: AppColors.outline),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: AppColors.outlineVariant),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: AppColors.outlineVariant),
+                        controller: TextEditingController(
+                          text: _formatDate(_selectedDate),
+                        ),
+                        decoration: _inputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.calendar_month,
+                            color: AppColors.outline,
                           ),
                         ),
                         style: theme.textTheme.bodyMedium,
@@ -256,107 +368,134 @@ class _RecordServicePageState extends State<RecordServicePage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Odometer
-                  Text('Odometer Saat Servis', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.onSurfaceVariant)),
+                  Text(
+                    'Odometer Saat Servis',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _odometerController,
+                    enabled: !_isLoading,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.surfaceContainerLowest,
-                      prefixIcon: const Icon(Icons.speed, color: AppColors.outline),
-                      suffixIcon: Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('km', style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.outline)),
-                          ],
-                        ),
+                    decoration: _inputDecoration(
+                      prefixIcon: const Icon(
+                        Icons.speed,
+                        color: AppColors.outline,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outlineVariant),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outlineVariant),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.primary),
+                      suffixText: 'km',
+                    ),
+                    style: theme.textTheme.bodyMedium,
+                    validator: (value) {
+                      final number = int.tryParse(value ?? '');
+
+                      if (number == null) {
+                        return 'Odometer harus berupa angka';
+                      }
+
+                      if (number < 0) {
+                        return 'Odometer tidak boleh negatif';
+                      }
+
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  Text(
+                    'Tempat Servis',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _workshopController,
+                    enabled: !_isLoading,
+                    decoration: _inputDecoration(
+                      hintText: 'Contoh: Bengkel Pak Budi',
+                      prefixIcon: const Icon(
+                        Icons.storefront,
+                        color: AppColors.outline,
                       ),
                     ),
                     style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 16),
 
-                  // Biaya Servis
-                  Text('Biaya Servis', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.onSurfaceVariant)),
+                  Text(
+                    'Biaya Servis',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _costController,
+                    enabled: !_isLoading,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.surfaceContainerLowest,
+                    decoration: _inputDecoration(
                       prefixIcon: Padding(
                         padding: const EdgeInsets.only(left: 16, right: 8),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Rp', style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.outline, fontWeight: FontWeight.w500)),
-                          ],
+                        child: Center(
+                          widthFactor: 1,
+                          child: Text(
+                            'Rp',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.outline,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outlineVariant),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outlineVariant),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.primary),
                       ),
                     ),
                     style: theme.textTheme.bodyMedium,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return null;
+                      }
+
+                      final number = int.tryParse(value);
+
+                      if (number == null) {
+                        return 'Biaya harus berupa angka';
+                      }
+
+                      if (number < 0) {
+                        return 'Biaya tidak boleh negatif';
+                      }
+
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
 
-                  // Catatan
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Catatan', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.onSurfaceVariant)),
-                      Text('Opsional', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.outlineVariant, fontWeight: FontWeight.normal)),
+                      Text(
+                        'Catatan',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
+                      Text(
+                        'Opsional',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: AppColors.outlineVariant,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _notesController,
+                    enabled: !_isLoading,
                     maxLines: 4,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.surfaceContainerLowest,
-                      contentPadding: const EdgeInsets.all(16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outlineVariant),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.outlineVariant),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.primary),
-                      ),
+                    decoration: _inputDecoration(
+                      hintText: 'Contoh: Ganti oli AHM 10W40',
                     ),
                     style: theme.textTheme.bodyMedium,
                   ),
@@ -369,7 +508,9 @@ class _RecordServicePageState extends State<RecordServicePage> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLowest.withValues(alpha: 0.9),
-          border: Border(top: BorderSide(color: AppColors.surfaceVariant)),
+          border: const Border(
+            top: BorderSide(color: AppColors.surfaceVariant),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -385,12 +526,24 @@ class _RecordServicePageState extends State<RecordServicePage> {
           bottom: 16 + MediaQuery.of(context).padding.bottom,
         ),
         child: ElevatedButton.icon(
-          onPressed: _saveRecord,
-          icon: const Icon(Icons.save, size: 20),
-          label: const Text('Simpan Catatan'),
+          onPressed: _isLoading ? null : _saveRecord,
+          icon: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.onPrimary,
+                  ),
+                )
+              : const Icon(Icons.save, size: 20),
+          label: Text(_isLoading ? 'Menyimpan...' : 'Simpan Catatan'),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: AppColors.onPrimary,
+            disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
+            disabledForegroundColor:
+                AppColors.onPrimary.withValues(alpha: 0.8),
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
