@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../onboarding/onboarding_page.dart';
 import '../../profile/account_information_page.dart';
@@ -13,18 +15,108 @@ class SettingsTab extends StatefulWidget {
 
 class _SettingsTabState extends State<SettingsTab> {
   bool _pushNotificationsEnabled = true;
+  bool _isLoggingOut = false;
+
+  User? get _user => Supabase.instance.client.auth.currentUser;
+
+  String get _userEmail {
+    return _user?.email ?? '-';
+  }
+
+  String get _userName {
+    final metadata = _user?.userMetadata;
+
+    if (metadata == null) return 'Pengguna MotoServis';
+
+    final fullName = metadata['full_name'];
+    final name = metadata['name'];
+
+    if (fullName != null && fullName.toString().trim().isNotEmpty) {
+      return fullName.toString();
+    }
+
+    if (name != null && name.toString().trim().isNotEmpty) {
+      return name.toString();
+    }
+
+    return 'Pengguna MotoServis';
+  }
+
+  String? get _avatarUrl {
+    final metadata = _user?.userMetadata;
+
+    if (metadata == null) return null;
+
+    final avatarUrl = metadata['avatar_url'] ?? metadata['picture'];
+
+    if (avatarUrl == null || avatarUrl.toString().trim().isEmpty) {
+      return null;
+    }
+
+    return avatarUrl.toString();
+  }
 
   void _openAccountInformation() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const AccountInformationPage()),
+      MaterialPageRoute<void>(
+        builder: (_) => const AccountInformationPage(),
+      ),
     );
   }
 
-  void _handleLogout() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const OnboardingPage()),
-      (route) => false,
+  Future<void> _handleLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Keluar Akun'),
+          content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Keluar'),
+            ),
+          ],
+        );
+      },
     );
+
+    if (confirm != true) return;
+
+    setState(() {
+      _isLoggingOut = true;
+    });
+
+    try {
+      await Supabase.instance.client.auth.signOut();
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => const OnboardingPage(),
+        ),
+        (route) => false,
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal logout, coba lagi'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoggingOut = false;
+        });
+      }
+    }
   }
 
   @override
@@ -32,11 +124,21 @@ class _SettingsTabState extends State<SettingsTab> {
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 24, bottom: 100),
+      padding: const EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 24,
+        bottom: 100,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ProfileCard(theme: theme),
+          _ProfileCard(
+            theme: theme,
+            name: _userName,
+            email: _userEmail,
+            avatarUrl: _avatarUrl,
+          ),
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -70,10 +172,13 @@ class _SettingsTabState extends State<SettingsTab> {
           ),
           const SizedBox(height: 32),
           FilledButton(
-            onPressed: _handleLogout,
+            onPressed: _isLoggingOut ? null : _handleLogout,
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.onPrimary,
+              disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
+              disabledForegroundColor:
+                  AppColors.onPrimary.withValues(alpha: 0.8),
               padding: const EdgeInsets.symmetric(vertical: 16),
               textStyle: theme.textTheme.labelLarge,
               shape: RoundedRectangleBorder(
@@ -82,7 +187,16 @@ class _SettingsTabState extends State<SettingsTab> {
               elevation: 0,
               minimumSize: const Size(double.infinity, 52),
             ),
-            child: const Text('Keluar'),
+            child: _isLoggingOut
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.onPrimary,
+                    ),
+                  )
+                : const Text('Keluar'),
           ),
           const SizedBox(height: 24),
           Center(
@@ -102,12 +216,26 @@ class _SettingsTabState extends State<SettingsTab> {
 }
 
 class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({required this.theme});
+  const _ProfileCard({
+    required this.theme,
+    required this.name,
+    required this.email,
+    this.avatarUrl,
+  });
 
   final ThemeData theme;
+  final String name;
+  final String email;
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
+    ImageProvider? avatarImage;
+
+    if (avatarUrl != null) {
+      avatarImage = NetworkImage(avatarUrl!);
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -134,14 +262,20 @@ class _ProfileCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.surfaceContainer,
-                  image: DecorationImage(
-                    image: const NetworkImage(
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuDqQPU6H6Jh4cONGr6oQN0BTnuuqx9Vf8u8dO2ZAwLRQVrVGnCF6Fu_4p7zoQbUhJ-Q1ooMLleOA9p_tHpPm4QCFnJyagnCu7xk7qtgoNaQx5xj3U7k-kUwiM4FhTmm4EXgbBmGWJsKwbrQF9XyNI3zIzSlqf7he5-EJAWISTpNY9avT_glv6MdeiQnMcgIYJ7MPuoJa4yi4LSYiXh-pEAhKtewdcyYKQvmF7NBNde5BoIEWs5Z0b_BFhEN-zEHYwVjJQn2mLZVe1IB',
-                    ),
-                    fit: BoxFit.cover,
-                    onError: (_, _) {},
-                  ),
+                  image: avatarImage == null
+                      ? null
+                      : DecorationImage(
+                          image: avatarImage,
+                          fit: BoxFit.cover,
+                        ),
                 ),
+                child: avatarImage == null
+                    ? const Icon(
+                        Icons.person,
+                        color: AppColors.primary,
+                        size: 32,
+                      )
+                    : null,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -149,14 +283,14 @@ class _ProfileCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Budi Santoso',
+                      name,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'budi@email.com',
+                      email,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
@@ -201,7 +335,11 @@ class _ProfileCard extends StatelessWidget {
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [profileInfo, const SizedBox(height: 16), editButton],
+            children: [
+              profileInfo,
+              const SizedBox(height: 16),
+              editButton,
+            ],
           );
         },
       ),
@@ -322,9 +460,9 @@ class _SettingsSwitchItem extends StatelessWidget {
             ),
           ),
           Theme(
-            data: Theme.of(
-              context,
-            ).copyWith(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
+            data: Theme.of(context).copyWith(
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: SizedBox(
               width: 42,
               height: 24,

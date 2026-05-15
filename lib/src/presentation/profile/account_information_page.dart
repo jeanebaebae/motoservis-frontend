@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/forgot_password_page.dart';
 import '../core/theme/app_colors.dart';
@@ -7,6 +8,8 @@ import '../dashboard/widgets/moto_bottom_navigation_bar.dart';
 
 class AccountInformationPage extends StatelessWidget {
   const AccountInformationPage({super.key});
+
+  User? get _user => Supabase.instance.client.auth.currentUser;
 
   void _handleBottomNavTap(BuildContext context, int index) {
     if (index == 3) {
@@ -23,14 +26,46 @@ class AccountInformationPage extends StatelessWidget {
   }
 
   void _openForgotPassword(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const ForgotPasswordPage()));
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const ForgotPasswordPage(),
+      ),
+    );
+  }
+
+  String _formatDate(String? value) {
+    if (value == null) return '-';
+
+    final date = DateTime.tryParse(value);
+
+    if (date == null) return '-';
+
+    const monthNames = [
+      '',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    return '${date.day} ${monthNames[date.month]} ${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final user = _user;
+    final email = user?.email ?? '-';
+    final createdAt = _formatDate(user?.createdAt);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -69,7 +104,7 @@ class AccountInformationPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Detail akun Anda ditampilkan di bawah ini. Ketuk password untuk membuat password baru.',
+                    'Detail akun Anda ditampilkan di bawah ini. Ketuk password untuk mengirim link reset password.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.onSurfaceVariant,
                     ),
@@ -91,10 +126,10 @@ class AccountInformationPage extends StatelessWidget {
                     clipBehavior: Clip.antiAlias,
                     child: Column(
                       children: [
-                        const _AccountInfoTile(
+                        _AccountInfoTile(
                           icon: Icons.mail_outline,
                           label: 'Email',
-                          value: 'budi.santoso@motor.com',
+                          value: email,
                         ),
                         const Divider(
                           height: 1,
@@ -102,7 +137,7 @@ class AccountInformationPage extends StatelessWidget {
                           color: AppColors.outlineVariant,
                         ),
                         _AccountInfoActionTile(
-                          icon: Icons.edit_outlined,
+                          icon: Icons.lock_outline,
                           label: 'Password',
                           value: '**********',
                           onTap: () => _openForgotPassword(context),
@@ -112,10 +147,10 @@ class AccountInformationPage extends StatelessWidget {
                           thickness: 1,
                           color: AppColors.outlineVariant,
                         ),
-                        const _AccountInfoTile(
+                        _AccountInfoTile(
                           icon: Icons.calendar_month_outlined,
                           label: 'Tanggal Bergabung',
-                          value: '10 Mei 2026',
+                          value: createdAt,
                         ),
                       ],
                     ),

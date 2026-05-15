@@ -142,7 +142,7 @@ class _ServisTabState extends State<ServisTab> {
                     children: [
                       Text(
                         'Jadwal Servis',
-                        style: theme.textTheme.headlineLarge?.copyWith(
+                        style: theme.textTheme.displayLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.onSurface,
                         ),

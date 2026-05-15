@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../core/theme/app_colors.dart';
 import '../dashboard/dashboard_page.dart';
 import '../dashboard/widgets/moto_bottom_navigation_bar.dart';
@@ -12,14 +14,35 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'Budi Santoso');
-  final _phoneController = TextEditingController(text: '0812 3456 7890');
-  final _emailController = TextEditingController(
-    text: 'budi.santoso@motor.com',
-  );
-  final _workshopAddressController = TextEditingController(
-    text: 'Jl. Merdeka Raya No. 45, Jakarta Selatan',
-  );
+
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _workshopAddressController = TextEditingController();
+
+  bool _isLoading = false;
+
+  User? get _user => Supabase.instance.client.auth.currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final user = _user;
+    final metadata = user?.userMetadata ?? {};
+
+    _nameController.text =
+        metadata['full_name']?.toString() ??
+        metadata['name']?.toString() ??
+        '';
+
+    _phoneController.text = metadata['phone']?.toString() ?? '';
+
+    _emailController.text = user?.email ?? '';
+
+    _workshopAddressController.text =
+        metadata['workshop_address']?.toString() ?? '';
+  }
 
   @override
   void dispose() {
@@ -30,14 +53,54 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
-  void _saveProfile() {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Perubahan profil berhasil disimpan!')),
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(
+          data: {
+            'full_name': _nameController.text.trim(),
+            'phone': _phoneController.text.trim(),
+            'workshop_address': _workshopAddressController.text.trim(),
+          },
+        ),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Perubahan profil berhasil disimpan!'),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } on AuthException catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal menyimpan profil, coba lagi'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _handleBottomNavTap(int index) {
@@ -92,13 +155,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final avatarUrl = _user?.userMetadata?['avatar_url'] ??
+        _user?.userMetadata?['picture'];
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           color: AppColors.primary,
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
         title: Text(
           'Edit Profil',
@@ -155,14 +221,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                       offset: const Offset(0, 2),
                                     ),
                                   ],
-                                  image: DecorationImage(
-                                    image: const NetworkImage(
-                                      'https://lh3.googleusercontent.com/aida-public/AB6AXuCTouVxoMzexrmQaem1jH2tyzQ2OIjNkR_tPLg8JPCbkcQoSSQlV1OYDWlMkv6baIVDV5xLf30z7f19q-1NE91-ElDnCgftTgEmFje61V6kF9AgueZADYrt_BCB-taUUIcNX1rR_v-CxJJakSYk86qpMS_utMg7kGvRY4c2tT6YO63NGlwaYHlr0y3P2hRC9qwV9rVujwPfhA0W2ehbGggbU_aoWS_TeNtxPQay7r8Z4RTU0RLxzWYpcNntDA3yWKUSUZUdapA5q9kq',
-                                    ),
-                                    fit: BoxFit.cover,
-                                    onError: (_, _) {},
-                                  ),
+                                  image: avatarUrl == null
+                                      ? null
+                                      : DecorationImage(
+                                          image: NetworkImage(
+                                            avatarUrl.toString(),
+                                          ),
+                                          fit: BoxFit.cover,
+                                        ),
                                 ),
+                                child: avatarUrl == null
+                                    ? const Icon(
+                                        Icons.person,
+                                        size: 52,
+                                        color: AppColors.primary,
+                                      )
+                                    : null,
                               ),
                               Positioned(
                                 right: -4,
@@ -173,7 +247,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   elevation: 3,
                                   child: InkWell(
                                     customBorder: const CircleBorder(),
-                                    onTap: () {},
+                                    onTap: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Upload foto profil belum diaktifkan.',
+                                          ),
+                                        ),
+                                      );
+                                    },
                                     child: Container(
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
@@ -197,7 +279,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Format JPG atau PNG (Maks 2MB)',
+                            'Foto profil bisa ditambahkan nanti.',
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: AppColors.onSurfaceVariant,
                             ),
@@ -206,10 +288,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 32),
+
                     _ProfileField(
                       label: 'Nama Lengkap',
                       child: TextFormField(
                         controller: _nameController,
+                        enabled: !_isLoading,
                         decoration: _buildInputDecoration(
                           labelText: 'Nama Lengkap',
                         ),
@@ -223,67 +307,58 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
                     _ProfileField(
                       label: 'Nomor Handphone',
                       child: TextFormField(
                         controller: _phoneController,
+                        enabled: !_isLoading,
                         keyboardType: TextInputType.phone,
                         decoration: _buildInputDecoration(
                           labelText: 'Nomor Handphone',
                         ),
                         style: theme.textTheme.bodyMedium,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Nomor handphone tidak boleh kosong';
-                          }
-                          return null;
-                        },
                       ),
                     ),
                     const SizedBox(height: 16),
+
                     _ProfileField(
                       label: 'Email',
                       child: TextFormField(
                         controller: _emailController,
+                        enabled: false,
                         keyboardType: TextInputType.emailAddress,
                         decoration: _buildInputDecoration(labelText: 'Email'),
                         style: theme.textTheme.bodyMedium,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Email tidak boleh kosong';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Masukkan email yang valid';
-                          }
-                          return null;
-                        },
                       ),
                     ),
+                    const SizedBox(height: 4),
                     const SizedBox(height: 16),
+
                     _ProfileField(
                       label: 'Alamat Bengkel Langganan',
                       child: TextFormField(
                         controller: _workshopAddressController,
+                        enabled: !_isLoading,
                         maxLines: 3,
                         decoration: _buildInputDecoration(
                           labelText: 'Alamat Bengkel Langganan',
                           maxLines: 3,
                         ),
                         style: theme.textTheme.bodyMedium,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Alamat bengkel tidak boleh kosong';
-                          }
-                          return null;
-                        },
                       ),
                     ),
                     const SizedBox(height: 32),
+
                     ElevatedButton(
-                      onPressed: _saveProfile,
+                      onPressed: _isLoading ? null : _saveProfile,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.onPrimary,
+                        disabledBackgroundColor:
+                            AppColors.primary.withValues(alpha: 0.6),
+                        disabledForegroundColor:
+                            AppColors.onPrimary.withValues(alpha: 0.8),
                         minimumSize: const Size(double.infinity, 56),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -291,7 +366,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         elevation: 2,
                         textStyle: theme.textTheme.labelLarge,
                       ),
-                      child: const Text('Simpan Perubahan'),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.onPrimary,
+                              ),
+                            )
+                          : const Text('Simpan Perubahan'),
                     ),
                   ],
                 ),
