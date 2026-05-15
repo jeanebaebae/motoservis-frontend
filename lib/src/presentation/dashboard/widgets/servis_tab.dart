@@ -286,17 +286,33 @@ class _ServisTabState extends State<ServisTab> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const SizedBox(height: 24),
-                              const SizedBox(height: 8),
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.surfaceContainerLowest,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    '!',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.secondaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 9),
                               Text(
                                 'Perlu Tindakan',
                                 style: theme.textTheme.labelMedium?.copyWith(
-                                  color: AppColors.onSecondaryContainer
-                                      .withValues(alpha: 0.8),
+                                  color: AppColors.onSecondaryContainer.withValues(alpha: 0.8),
                                 ),
                               ),
                               Text(
-                                '${attentionReminders.length}',
+                                '1',
                                 style: theme.textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.onSecondaryContainer,

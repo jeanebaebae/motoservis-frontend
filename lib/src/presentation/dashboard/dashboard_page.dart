@@ -5,6 +5,8 @@ import 'widgets/motor_tab.dart';
 import 'widgets/moto_bottom_navigation_bar.dart';
 import 'widgets/settings_tab.dart';
 import 'widgets/servis_tab.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../profile/edit_profile_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key, this.initialIndex = 0});
@@ -17,6 +19,20 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late int _currentIndex;
+
+  String? get _avatarUrl {
+    final metadata = Supabase.instance.client.auth.currentUser?.userMetadata;
+
+    if (metadata == null) return null;
+
+    final avatarUrl = metadata['avatar_url'] ?? metadata['picture'];
+
+    if (avatarUrl == null || avatarUrl.toString().trim().isEmpty) {
+      return null;
+    }
+
+    return avatarUrl.toString();
+  }
 
   final List<Widget> _tabs = [
     const HomeTab(),
@@ -53,49 +69,44 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: Stack(
-              children: [
-                const Icon(
-                  Icons.notifications,
-                  color: AppColors.onSurfaceVariant,
-                ),
-                Positioned(
-                  right: 2,
-                  top: 2,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: AppColors.secondaryContainer,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.surface, width: 2),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            onPressed: () {},
-          ),
           Padding(
             padding: const EdgeInsets.only(right: 20.0, left: 8.0),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.surfaceContainer,
-                border: Border.all(
-                  color: AppColors.surfaceContainerHigh,
-                  width: 2,
-                ),
-                image: DecorationImage(
-                  image: const NetworkImage(
-                    'https://lh3.googleusercontent.com/aida-public/AB6AXuA73e2YOpEzYGqpKu3nqB5DN3bmA1oty-RVF41aoo4JWzGcaHT9STQLJUbNyiSvJH2Gf4g3Q3VRd1vIeNVgL1eLbjBv1tL5dLoFpPdhtSQk_-AL-IOZtBi8rowZ4lfcvaGj-EmnxFisMwxmTZncjDgO3ZRzFR6-l0fBs8D23ItNuw9bNIbRUw_4FMNxHOcgEbPM7yg5etMKhedG8yLnd_4LDb8JjQ-wUdDHWLzmngD0WY8OKQZG4d-OkAATPJqADnwlBO84rlJHMNIY',
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EditProfilePage(),
                   ),
-                  fit: BoxFit.cover,
-                  onError: (_, _) {},
+                );
+
+                setState(() {});
+              },
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.surfaceContainer,
+                  border: Border.all(
+                    color: AppColors.surfaceContainerHigh,
+                    width: 2,
+                  ),
+                  image: _avatarUrl == null
+                      ? null
+                      : DecorationImage(
+                          image: NetworkImage(_avatarUrl!),
+                          fit: BoxFit.cover,
+                        ),
                 ),
+                child: _avatarUrl == null
+                    ? const Icon(
+                        Icons.person,
+                        color: AppColors.primary,
+                        size: 22,
+                      )
+                    : null,
               ),
             ),
           ),

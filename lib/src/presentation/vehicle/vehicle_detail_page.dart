@@ -213,13 +213,20 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
         ),
         actions: [
           IconButton(
+            padding: const EdgeInsets.only(right: 12),
             icon: const Icon(Icons.edit),
             color: AppColors.primary,
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const EditVehiclePage(),
+                  builder: (context) => EditVehiclePage(
+                      vehicleId: widget.vehicleId,
+                      initialName: vehicleName,
+                      initialBrand: brand,
+                      initialYear: int.tryParse(year) ?? DateTime.now().year,
+                      initialPlateNumber: plateNumber,
+                  ),
                 ),
               );
             },

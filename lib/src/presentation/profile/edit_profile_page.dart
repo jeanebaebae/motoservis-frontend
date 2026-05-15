@@ -279,7 +279,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Foto profil bisa ditambahkan nanti.',
+                            'Tambahkan foto profil Anda.',
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: AppColors.onSurfaceVariant,
                             ),

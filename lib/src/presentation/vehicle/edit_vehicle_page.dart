@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
+
+import '../../core/constants/api_constants.dart';
+import '../../core/network/api_client.dart';
 import '../core/theme/app_colors.dart';
 
 class EditVehiclePage extends StatefulWidget {
-  const EditVehiclePage({super.key});
+  const EditVehiclePage({
+    super.key,
+    required this.vehicleId,
+    required this.initialName,
+    required this.initialBrand,
+    required this.initialYear,
+    required this.initialPlateNumber,
+  });
+
+  final String vehicleId;
+  final String initialName;
+  final String initialBrand;
+  final int initialYear;
+  final String initialPlateNumber;
 
   @override
   State<EditVehiclePage> createState() => _EditVehiclePageState();
@@ -10,15 +26,65 @@ class EditVehiclePage extends StatefulWidget {
 
 class _EditVehiclePageState extends State<EditVehiclePage> {
   final _formKey = GlobalKey<FormState>();
-  
-  String? _alias;
+  final ApiClient _apiClient = ApiClient();
+
+  late final TextEditingController _nameController;
+  late final TextEditingController _plateController;
+
   String? _brand;
   String? _year;
-  String? _plate;
-  String? _odometer;
 
-  final List<String> _brands = ['Honda', 'Yamaha', 'Suzuki', 'Kawasaki', 'Vespa'];
-  final List<String> _years = ['2024', '2023', '2022', '2021', '2020'];
+  bool _isLoading = false;
+
+  final List<String> _brands = [
+    'Honda',
+    'Yamaha',
+    'Suzuki',
+    'Kawasaki',
+    'Vespa',
+  ];
+
+  final List<String> _years = [
+    '2026',
+    '2025',
+    '2024',
+    '2023',
+    '2022',
+    '2021',
+    '2020',
+    '2019',
+    '2018',
+    '2017',
+    '2016',
+    '2015',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _nameController = TextEditingController(text: widget.initialName);
+    _plateController = TextEditingController(text: widget.initialPlateNumber);
+
+    _brand = widget.initialBrand;
+    _year = widget.initialYear.toString();
+
+    if (!_brands.contains(_brand)) {
+      _brands.add(_brand!);
+    }
+
+    if (!_years.contains(_year)) {
+      _years.add(_year!);
+      _years.sort((a, b) => b.compareTo(a));
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _plateController.dispose();
+    super.dispose();
+  }
 
   InputDecoration _buildInputDecoration(String labelText, {Widget? prefixIcon}) {
     return InputDecoration(
@@ -44,18 +110,122 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: AppColors.error),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
     );
   }
 
-  void _saveVehicle() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      // Handle save logic here
-      debugPrint('Saved: $_alias, $_brand, $_year, $_plate, $_odometer');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kendaraan berhasil disimpan!')),
+  Future<void> _updateVehicle() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _apiClient.put(
+        '${ApiConstants.baseUrl}/vehicles/${widget.vehicleId}',
+        {
+          'name': _nameController.text.trim(),
+          'brand': _brand,
+          'year': int.parse(_year!),
+          'plate_number': _plateController.text.trim().toUpperCase(),
+        },
       );
-      Navigator.pop(context);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Data kendaraan berhasil diperbarui!'),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst('Exception: ', ''),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteVehicle() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Hapus Kendaraan'),
+          content: const Text(
+            'Apakah Anda yakin ingin menghapus kendaraan ini? Reminder dan riwayat servis kendaraan ini juga akan terhapus.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: AppColors.onError,
+              ),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _apiClient.delete(
+        '${ApiConstants.baseUrl}/vehicles/${widget.vehicleId}',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kendaraan berhasil dihapus'),
+        ),
+      );
+
+      Navigator.pop(context, 'deleted');
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst('Exception: ', ''),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -69,14 +239,23 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           color: AppColors.primary,
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
         title: Text(
           'Edit Kendaraan',
           style: theme.textTheme.headlineSmall?.copyWith(
             color: AppColors.primary,
+            fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            padding: const EdgeInsets.only(right: 12),
+            onPressed: _isLoading ? null : _confirmDeleteVehicle,
+            icon: const Icon(Icons.delete_outline),
+            color: AppColors.error,
+          ),
+        ],
         elevation: 0,
         backgroundColor: AppColors.surface,
         bottom: PreferredSize(
@@ -88,7 +267,12 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 24, left: 20, right: 20, bottom: 40),
+        padding: const EdgeInsets.only(
+          top: 24,
+          left: 20,
+          right: 20,
+          bottom: 40,
+        ),
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLowest,
@@ -109,17 +293,18 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Masukkan detail kendaraan Anda untuk mulai melacak riwayat servis dan pengingat pemeliharaan.',
+                  'Ubah informasi kendaraan Anda. Odometer dapat diperbarui langsung dari halaman detail kendaraan.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 24),
-                
-                // Nama Alias
+
                 Text('Nama Alias', style: theme.textTheme.labelLarge),
                 const SizedBox(height: 4),
                 TextFormField(
+                  controller: _nameController,
+                  enabled: !_isLoading,
                   decoration: _buildInputDecoration('Contoh: Motor Harian'),
                   style: theme.textTheme.bodyMedium,
                   validator: (value) {
@@ -128,11 +313,9 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                     }
                     return null;
                   },
-                  onSaved: (value) => _alias = value,
                 ),
                 const SizedBox(height: 16),
 
-                // Grid for Merek and Tahun
                 Row(
                   children: [
                     Expanded(
@@ -142,20 +325,30 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                           Text('Merek', style: theme.textTheme.labelLarge),
                           const SizedBox(height: 4),
                           DropdownButtonFormField<String>(
+                            value: _brand,
                             decoration: _buildInputDecoration('Pilih Merek'),
                             items: _brands.map((String brand) {
                               return DropdownMenuItem(
                                 value: brand,
-                                child: Text(brand, style: theme.textTheme.bodyMedium),
+                                child: Text(
+                                  brand,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
                               );
                             }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _brand = value;
-                              });
+                            onChanged: _isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _brand = value;
+                                    });
+                                  },
+                            validator: (value) {
+                              if (value == null) {
+                                return 'Pilih merek';
+                              }
+                              return null;
                             },
-                            validator: (value) => value == null ? 'Pilih merek' : null,
-                            onSaved: (value) => _brand = value,
                           ),
                         ],
                       ),
@@ -168,20 +361,30 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                           Text('Tahun', style: theme.textTheme.labelLarge),
                           const SizedBox(height: 4),
                           DropdownButtonFormField<String>(
+                            value: _year,
                             decoration: _buildInputDecoration('Pilih Tahun'),
                             items: _years.map((String year) {
                               return DropdownMenuItem(
                                 value: year,
-                                child: Text(year, style: theme.textTheme.bodyMedium),
+                                child: Text(
+                                  year,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
                               );
                             }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _year = value;
-                              });
+                            onChanged: _isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _year = value;
+                                    });
+                                  },
+                            validator: (value) {
+                              if (value == null) {
+                                return 'Pilih tahun';
+                              }
+                              return null;
                             },
-                            validator: (value) => value == null ? 'Pilih tahun' : null,
-                            onSaved: (value) => _year = value,
                           ),
                         ],
                       ),
@@ -190,10 +393,11 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Nomor Plat
                 Text('Nomor Plat', style: theme.textTheme.labelLarge),
                 const SizedBox(height: 4),
                 TextFormField(
+                  controller: _plateController,
+                  enabled: !_isLoading,
                   decoration: _buildInputDecoration('B 1234 ABC'),
                   style: theme.textTheme.bodyMedium,
                   textCapitalization: TextCapitalization.characters,
@@ -203,50 +407,22 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                     }
                     return null;
                   },
-                  onSaved: (value) => _plate = value,
                 ),
-                const SizedBox(height: 16),
 
-                // Odometer
-                Text('Odometer Saat Ini (KM)', style: theme.textTheme.labelLarge),
-                const SizedBox(height: 4),
-                TextFormField(
-                  decoration: _buildInputDecoration(
-                    '12000',
-                    prefixIcon: const Icon(Icons.speed, color: AppColors.onSurfaceVariant),
-                  ),
-                  style: theme.textTheme.bodyMedium,
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Odometer tidak boleh kosong';
-                    }
-                    if (int.tryParse(value) == null) {
-                      return 'Odometer harus berupa angka';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) => _odometer = value,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Estimasi jarak tempuh terakhir untuk mengatur jadwal servis.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
                 const SizedBox(height: 32),
-
                 const Divider(color: AppColors.outlineVariant),
                 const SizedBox(height: 16),
 
-                // Action Button
                 ElevatedButton(
-                  onPressed: _saveVehicle,
+                  onPressed: _isLoading ? null : _updateVehicle,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.tertiaryContainer,
-                    foregroundColor: AppColors.onTertiary,
-                    minimumSize: const Size(double.infinity, 56), // match HTML py-md which is around 56 total height or similar, 48+ usually
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
+                    disabledBackgroundColor:
+                        AppColors.primary.withValues(alpha: 0.6),
+                    disabledForegroundColor:
+                        AppColors.onPrimary.withValues(alpha: 0.8),
+                    minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -255,12 +431,22 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.save, size: 20),
+                      if (_isLoading)
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.onPrimary,
+                          ),
+                        )
+                      else
+                        const Icon(Icons.save, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'Simpan Kendaraan',
+                        _isLoading ? 'Menyimpan...' : 'Simpan Perubahan',
                         style: theme.textTheme.labelLarge?.copyWith(
-                          color: AppColors.onTertiary,
+                          color: AppColors.onPrimary,
                         ),
                       ),
                     ],

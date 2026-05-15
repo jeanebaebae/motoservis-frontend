@@ -7,6 +7,7 @@ import '../../vehicle/add_vehicle_page.dart';
 import '../../vehicle/vehicle_detail_page.dart';
 import 'status_summary_card.dart';
 import 'vehicle_card.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -17,6 +18,26 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   final ApiClient _apiClient = ApiClient();
+
+  String get _userName {
+    final user = Supabase.instance.client.auth.currentUser;
+    final metadata = user?.userMetadata;
+
+    if (metadata == null) return 'Pengguna';
+
+    final fullName = metadata['full_name'];
+    final name = metadata['name'];
+
+    if (fullName != null && fullName.toString().trim().isNotEmpty) {
+      return fullName.toString().trim();
+    }
+
+    if (name != null && name.toString().trim().isNotEmpty) {
+      return name.toString().trim();
+    }
+
+    return 'Pengguna';
+  }
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -86,10 +107,15 @@ class _HomeTabState extends State<HomeTab> {
       final progressPercent = reminder['progress_percentage'] ?? 0;
       final progress = (progressPercent / 100).clamp(0.0, 1.0);
 
+      final remainingKmRaw =
+          int.tryParse(reminder['remaining_km'].toString()) ?? 0;
+
+      final remainingKm = remainingKmRaw < 0 ? 0 : remainingKmRaw;
+
       return VehicleServiceItem(
         name: reminder['service_type'] ?? '-',
         icon: _getServiceIcon(reminder['service_type'] ?? ''),
-        statusText: 'Sisa: ${_formatKm(reminder['remaining_km'])}',
+        statusText: 'Sisa: ${_formatKm(remainingKm)}',
         progress: progress,
         isWarning: true,
       );
@@ -148,7 +174,7 @@ class _HomeTabState extends State<HomeTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Halo! 👋',
+              'Halo, $_userName!',
               style: theme.textTheme.displayMedium,
             ),
             const SizedBox(height: 4),
