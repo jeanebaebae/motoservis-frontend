@@ -6,6 +6,7 @@ import '../core/theme/app_colors.dart';
 import '../service/record_service_page.dart';
 import 'edit_vehicle_page.dart';
 import 'add_reminder_page.dart';
+import '../service/service_history_page.dart';
 
 class VehicleDetailPage extends StatefulWidget {
   const VehicleDetailPage({
@@ -252,7 +253,7 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
               ),
               const SizedBox(height: 16),
 
-              _buildQuickActionsCard(theme, currentOdometer),
+              _buildQuickActionsCard(theme, currentOdometer, vehicleName),
               const SizedBox(height: 24),
 
               Row(
@@ -504,7 +505,7 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
     );
   }
 
-  Widget _buildQuickActionsCard(ThemeData theme, dynamic currentOdometer) {
+  Widget _buildQuickActionsCard(ThemeData theme, dynamic currentOdometer, String vehicleName) {
   return Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
@@ -551,7 +552,17 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ServiceHistoryPage(
+                  vehicleId: widget.vehicleId, 
+                  vehicleName: vehicleName,
+                ),
+              ),
+            );
+          },
           style: TextButton.styleFrom(
             foregroundColor: AppColors.primary,
             minimumSize: const Size(double.infinity, 48),
