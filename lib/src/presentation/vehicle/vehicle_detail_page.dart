@@ -312,6 +312,10 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
                       reminder['progress_percentage'] ?? 0;
                   final progress =
                       (progressPercent / 100).clamp(0.0, 1.0);
+                  final remainingKmRaw =
+                      int.tryParse(reminder['remaining_km'].toString()) ?? 0;
+
+                  final remainingKm = remainingKmRaw < 0 ? 0 : remainingKmRaw;
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
@@ -325,7 +329,7 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
                       currentOdometer: currentOdometer,
                       title: reminder['service_type'] ?? '-',
                       remainingText:
-                          'Sisa: ${_formatKm(reminder['remaining_km'])} km',
+                          'Sisa: ${_formatKm(remainingKm)} km',
                       icon: _getReminderIcon(isWarning),
                       isWarning: isWarning,
                       lastService:
