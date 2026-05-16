@@ -38,6 +38,7 @@ dependencies:
   material_symbols_icons: ^4.2928.1
   supabase_flutter: ^2.12.4
   http: ^1.2.1
+  image_picker: ^1.1.2
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -64,7 +65,8 @@ flutter:
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
-
+  assets:
+    - assets/images/google_logo.png
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
