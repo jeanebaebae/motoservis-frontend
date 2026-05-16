@@ -39,6 +39,8 @@ dependencies:
   supabase_flutter: ^2.12.4
   http: ^1.2.1
   image_picker: ^1.1.2
+  firebase_core: ^3.15.2
+  firebase_messaging: ^15.2.10
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

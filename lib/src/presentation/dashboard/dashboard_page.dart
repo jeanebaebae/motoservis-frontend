@@ -7,6 +7,7 @@ import 'widgets/settings_tab.dart';
 import 'widgets/servis_tab.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../profile/edit_profile_page.dart';
+import '../../data/services/notification_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key, this.initialIndex = 0});
@@ -19,6 +20,8 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late int _currentIndex;
+
+  final NotificationService _notificationService = NotificationService();
 
   String? get _avatarUrl {
     final metadata = Supabase.instance.client.auth.currentUser?.userMetadata;
@@ -45,6 +48,8 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+
+    _notificationService.setupWebPushNotification();
   }
 
   @override
