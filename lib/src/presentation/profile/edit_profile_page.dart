@@ -238,52 +238,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                       )
                                     : null,
                               ),
-                              Positioned(
-                                right: -4,
-                                bottom: -4,
-                                child: Material(
-                                  color: AppColors.primary,
-                                  shape: const CircleBorder(),
-                                  elevation: 3,
-                                  child: InkWell(
-                                    customBorder: const CircleBorder(),
-                                    onTap: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Upload foto profil belum diaktifkan.',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color:
-                                              AppColors.surfaceContainerLowest,
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.photo_camera,
-                                        size: 18,
-                                        color: AppColors.onPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            'Tambahkan foto profil Anda.',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
                         ],
                       ),
                     ),

@@ -312,7 +312,7 @@ class _ServisTabState extends State<ServisTab> {
                                 ),
                               ),
                               Text(
-                                '1',
+                                attentionReminders.length.toString(),
                                 style: theme.textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.onSecondaryContainer,
