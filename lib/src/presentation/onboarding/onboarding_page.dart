@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import '../auth/login_page.dart';
 import '../auth/sign_up_page.dart';
 import '../core/theme/app_colors.dart';
@@ -66,269 +66,121 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: Stack(
-        children: [
-          const Positioned.fill(child: _BrandPattern()),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, AppColors.surfaceContainerLow],
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.two_wheeler,
+                          color: AppColors.onPrimary,
+                          size: 38,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'motoservis',
+                        style: GoogleFonts.poppins(
+                          fontSize: 36,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.56,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: 448,
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 32,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Column(
-                              children: [
-                                const SizedBox(height: 32),
-                                Container(
-                                  width: 64,
-                                  height: 64,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Color(0x14000000),
-                                        blurRadius: 8,
-                                        offset: Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.two_wheeler,
-                                    color: AppColors.onPrimary,
-                                    size: 32,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'MotoServis',
-                                  style: theme.textTheme.displayMedium
-                                      ?.copyWith(
-                                        color: AppColors.primary,
-                                        letterSpacing: -0.56,
-                                      ),
-                                ),
-                              ],
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 32),
-                              child: Column(
-                                children: [
-                                  ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 280,
-                                      maxHeight: 280,
-                                    ),
-                                    child: AspectRatio(
-                                      aspectRatio: 1,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            32,
-                                          ),
-                                          border: Border.all(
-                                            color: AppColors.outlineVariant
-                                                .withValues(alpha: 0.3),
-                                          ),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: Color(0x22000000),
-                                              blurRadius: 24,
-                                              offset: Offset(0, 12),
-                                            ),
-                                          ],
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            32,
-                                          ),
-                                          child: Stack(
-                                            fit: StackFit.expand,
-                                            children: [
-                                              Image.network(
-                                                _heroImageUrl,
-                                                fit: BoxFit.cover,
-                                                errorBuilder:
-                                                    (
-                                                      context,
-                                                      error,
-                                                      stackTrace,
-                                                    ) {
-                                                      return Container(
-                                                        color: AppColors
-                                                            .surfaceContainerLowest,
-                                                        alignment:
-                                                            Alignment.center,
-                                                        child: const Icon(
-                                                          Icons.two_wheeler,
-                                                          size: 64,
-                                                          color:
-                                                              AppColors.outline,
-                                                        ),
-                                                      );
-                                                    },
-                                              ),
-                                              DecoratedBox(
-                                                decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    begin: Alignment.topCenter,
-                                                    end: Alignment.bottomCenter,
-                                                    colors: [
-                                                      Colors.transparent,
-                                                      Colors.black.withValues(
-                                                        alpha: 0.2,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 32),
-                                  ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 280,
-                                    ),
-                                    child: Text(
-                                      'Kelola servis motormu dengan mudah',
-                                      textAlign: TextAlign.center,
-                                      style: theme.textTheme.bodyLarge
-                                          ?.copyWith(
-                                            color: AppColors.onSurfaceVariant,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                SizedBox(
-                                  height: 56,
-                                  child: FilledButton(
-                                    onPressed: _isGoogleLoading
-                                        ? null
-                                        : () => _openLogin(context),
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: AppColors.onPrimary,
-                                      textStyle: theme.textTheme.labelLarge,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      elevation: 0,
-                                    ),
-                                    child: const Text('Masuk dengan Email'),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                SizedBox(
-                                  height: 56,
-                                  child: OutlinedButton.icon(
-                                    onPressed: _isGoogleLoading
-                                        ? null
-                                        : _loginWithGoogle,
-                                    style: OutlinedButton.styleFrom(
-                                      backgroundColor:
-                                          AppColors.surfaceContainerLowest,
-                                      foregroundColor: AppColors.primary,
-                                      side: const BorderSide(
-                                        color: AppColors.outlineVariant,
-                                      ),
-                                      textStyle: theme.textTheme.labelLarge,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    icon: Image.asset(
-                                      'assets/images/google_logo.png',
-                                      width: 22,
-                                      height: 22,
-                                    ),
-                                    label: Text(
-                                      _isGoogleLoading
-                                          ? 'Membuka Google...'
-                                          : 'Masuk dengan Google',
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Center(
-                                    child: Wrap(
-                                      crossAxisAlignment:
-                                          WrapCrossAlignment.center,
-                                      children: [
-                                        Text(
-                                          'Belum punya akun? ',
-                                          style: theme.textTheme.bodySmall
-                                              ?.copyWith(
-                                                color:
-                                                    AppColors.onSurfaceVariant,
-                                              ),
-                                        ),
-                                        TextButton(
-                                          onPressed: _isGoogleLoading
-                                              ? null
-                                              : () => _openSignUp(context),
-                                          style: TextButton.styleFrom(
-                                            foregroundColor: AppColors.primary,
-                                            padding: EdgeInsets.zero,
-                                            minimumSize: Size.zero,
-                                            tapTargetSize: MaterialTapTargetSize
-                                                .shrinkWrap,
-                                            textStyle:
-                                                theme.textTheme.labelLarge,
-                                          ),
-                                          child: const Text('Daftar Sekarang'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+
+              SizedBox(
+                height: 56,
+                child: FilledButton(
+                  onPressed: _isGoogleLoading ? null : () => _openLogin(context),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
+                    textStyle: theme.textTheme.labelLarge,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text('Masuk dengan Email'),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              SizedBox(
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: _isGoogleLoading ? null : _loginWithGoogle,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.outlineVariant),
+                    textStyle: theme.textTheme.labelLarge,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                );
-              },
-            ),
+                  icon: Image.asset(
+                    'assets/images/google_logo.png',
+                    width: 22,
+                    height: 22,
+                  ),
+                  label: Text(
+                    _isGoogleLoading
+                        ? 'Membuka Google...'
+                        : 'Masuk dengan Google',
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              Center(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'Belum punya akun? ',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _isGoogleLoading ? null : () => _openSignUp(context),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        textStyle: theme.textTheme.labelLarge,
+                      ),
+                      child: const Text('Daftar Sekarang'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    );
+);
   }
 }
 

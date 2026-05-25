@@ -38,7 +38,13 @@ class VehicleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accentColor = isWarning ? AppColors.secondaryContainer : AppColors.primary;
+
+    const okColor = Color(0xFF16A34A); // hijau utama
+    const okBgColor = Color(0xFFEAF8EF); // hijau muda background
+
+    final accentColor = isWarning
+        ? AppColors.secondaryContainer
+        : okColor;
 
     return Material(
       color: Colors.transparent,
@@ -149,7 +155,7 @@ class VehicleCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.check_circle,
-                            color: AppColors.primary,
+                            color: okColor,
                           ),
                           const SizedBox(width: 8),
                           Text(

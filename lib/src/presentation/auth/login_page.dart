@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_colors.dart';
 import '../dashboard/dashboard_page.dart';
 import 'forgot_password_page.dart';
@@ -119,7 +119,7 @@ class _LoginPageState extends State<LoginPage> {
 
   OutlineInputBorder _fieldBorder(Color color) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(24),
       borderSide: BorderSide(color: color),
     );
   }
@@ -173,7 +173,7 @@ class _LoginPageState extends State<LoginPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Masuk MotoServis',
+                              'Masuk',
                               style: theme.textTheme.displayMedium?.copyWith(
                                 color: AppColors.primary,
                               ),
@@ -265,7 +265,7 @@ class _LoginPageState extends State<LoginPage> {
                                   textStyle: theme.textTheme.headlineSmall
                                       ?.copyWith(color: AppColors.onPrimary),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(24),
                                   ),
                                   elevation: 0,
                                 ),

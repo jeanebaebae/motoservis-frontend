@@ -7,6 +7,7 @@ import 'widgets/settings_tab.dart';
 import 'widgets/servis_tab.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../profile/edit_profile_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key, this.initialIndex = 0});
@@ -60,8 +61,9 @@ class _DashboardPageState extends State<DashboardPage> {
             const Icon(Icons.motorcycle, color: AppColors.primary, size: 28),
             const SizedBox(width: 8),
             Text(
-              'MotoServis',
-              style: theme.textTheme.headlineMedium?.copyWith(
+              'motoservis',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 letterSpacing: -0.5,
               ),
