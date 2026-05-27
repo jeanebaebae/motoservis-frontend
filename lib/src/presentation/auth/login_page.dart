@@ -32,11 +32,11 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _openForgotPassword() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const ForgotPasswordPage()),
-    );
-  }
+  // void _openForgotPassword() {
+  //   Navigator.of(context).push(
+  //     MaterialPageRoute<void>(builder: (_) => const ForgotPasswordPage()),
+  //   );
+  // }
 
   Future<void> _login() async {
     final email = _emailController.text.trim();
@@ -236,19 +236,19 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             Align(
                               alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed:
-                                    _isLoading ? null : _openForgotPassword,
-                                style: TextButton.styleFrom(
-                                  foregroundColor: AppColors.secondary,
-                                  textStyle: theme.textTheme.labelLarge,
-                                  padding: const EdgeInsets.only(top: 8),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: const Text('Lupa Password?'),
-                              ),
+                              // child: TextButton(
+                              //   onPressed:
+                              //       _isLoading ? null : _openForgotPassword,
+                              //   style: TextButton.styleFrom(
+                              //     foregroundColor: AppColors.secondary,
+                              //     textStyle: theme.textTheme.labelLarge,
+                              //     padding: const EdgeInsets.only(top: 8),
+                              //     minimumSize: Size.zero,
+                              //     tapTargetSize:
+                              //         MaterialTapTargetSize.shrinkWrap,
+                              //   ),
+                              //   child: const Text('Lupa Password?'),
+                              // ),
                             ),
                             const SizedBox(height: 24),
                             SizedBox(

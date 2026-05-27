@@ -25,14 +25,6 @@ class AccountInformationPage extends StatelessWidget {
     );
   }
 
-  void _openForgotPassword(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const ForgotPasswordPage(),
-      ),
-    );
-  }
-
   String _formatDate(String? value) {
     if (value == null) return '-';
 
@@ -103,12 +95,6 @@ class AccountInformationPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Detail akun Anda ditampilkan di bawah ini. Ketuk password untuk mengirim link reset password.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
                   const SizedBox(height: 24),
                   Container(
                     decoration: BoxDecoration(
@@ -136,11 +122,10 @@ class AccountInformationPage extends StatelessWidget {
                           thickness: 1,
                           color: AppColors.outlineVariant,
                         ),
-                        _AccountInfoActionTile(
+                        _AccountInfoTile(
                           icon: Icons.lock_outline,
                           label: 'Password',
                           value: '**********',
-                          onTap: () => _openForgotPassword(context),
                         ),
                         const Divider(
                           height: 1,

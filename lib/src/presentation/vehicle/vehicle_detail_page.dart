@@ -556,7 +556,7 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
             side: const BorderSide(color: AppColors.primary),
             minimumSize: const Size(double.infinity, 48),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(30),
             ),
             textStyle: theme.textTheme.labelLarge,
           ),
@@ -578,7 +578,7 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
             foregroundColor: AppColors.primary,
             minimumSize: const Size(double.infinity, 48),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(30),
             ),
             textStyle: theme.textTheme.labelLarge,
           ),

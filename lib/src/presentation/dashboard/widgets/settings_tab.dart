@@ -14,7 +14,6 @@ class SettingsTab extends StatefulWidget {
 }
 
 class _SettingsTabState extends State<SettingsTab> {
-  bool _pushNotificationsEnabled = true;
   bool _isLoggingOut = false;
 
   User? get _user => Supabase.instance.client.auth.currentUser;
@@ -158,16 +157,6 @@ class _SettingsTabState extends State<SettingsTab> {
                 label: 'Informasi Akun',
                 onTap: _openAccountInformation,
               ),
-              _SettingsSwitchItem(
-                icon: Icons.notifications_outlined,
-                label: 'Push Notification',
-                value: _pushNotificationsEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _pushNotificationsEnabled = value;
-                  });
-                },
-              ),
             ],
           ),
           const SizedBox(height: 32),
@@ -182,7 +171,7 @@ class _SettingsTabState extends State<SettingsTab> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               textStyle: theme.textTheme.labelLarge,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(30),
               ),
               elevation: 0,
               minimumSize: const Size(double.infinity, 52),
@@ -316,7 +305,7 @@ class _ProfileCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               textStyle: theme.textTheme.labelLarge,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(30),
               ),
               minimumSize: Size(isWide ? 0 : double.infinity, 44),
             ),

@@ -50,7 +50,7 @@ class VehicleCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(24),
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLowest,

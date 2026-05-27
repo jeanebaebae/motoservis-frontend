@@ -318,7 +318,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             AppColors.onPrimary.withValues(alpha: 0.8),
                         minimumSize: const Size(double.infinity, 56),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(30),
                         ),
                         elevation: 2,
                         textStyle: theme.textTheme.labelLarge,
