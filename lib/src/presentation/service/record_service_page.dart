@@ -546,7 +546,7 @@ class _RecordServicePageState extends State<RecordServicePage> {
                 AppColors.onPrimary.withValues(alpha: 0.8),
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(24),
             ),
             elevation: 2,
             textStyle: theme.textTheme.labelLarge,

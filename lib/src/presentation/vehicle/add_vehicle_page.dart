@@ -53,23 +53,23 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       prefixIcon: prefixIcon,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(24),
         borderSide: const BorderSide(color: AppColors.outline),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(24),
         borderSide: const BorderSide(color: AppColors.outline),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(24),
         borderSide: const BorderSide(color: AppColors.primary),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(24),
         borderSide: const BorderSide(color: AppColors.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(24),
         borderSide: const BorderSide(color: AppColors.error),
       ),
     );
@@ -186,7 +186,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 ),
                 const SizedBox(height: 24),
 
-                Text('Nama Alias', style: theme.textTheme.labelLarge),
+                Text('Nama Kendaraan', style: theme.textTheme.labelLarge),
                 const SizedBox(height: 4),
                 TextFormField(
                   enabled: !_isLoading,

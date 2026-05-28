@@ -253,7 +253,7 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
               _buildVehicleIdentityCard(
                 context,
                 theme,
-                brand: brand,
+                vehicleName: vehicleName,
                 year: year,
                 plateNumber: plateNumber,
                 currentOdometer: currentOdometer,
@@ -350,7 +350,7 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
   Widget _buildVehicleIdentityCard(
     BuildContext context,
     ThemeData theme, {
-    required String brand,
+    required String vehicleName,
     required String year,
     required String plateNumber,
     required dynamic currentOdometer,
@@ -400,7 +400,7 @@ class _VehicleDetailPageState extends State<VehicleDetailPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '$brand\n$year',
+                            '$vehicleName\n$year',
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),

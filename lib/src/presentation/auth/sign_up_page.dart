@@ -142,7 +142,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   OutlineInputBorder _fieldBorder(Color color) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(24),
       borderSide: BorderSide(color: color),
     );
   }
@@ -193,19 +193,12 @@ class _SignUpPageState extends State<SignUpPage> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 24),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              'Daftar MotoServis',
+                              'Buat akun baru',
                               style: theme.textTheme.displayMedium?.copyWith(
                                 color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Bergabunglah untuk memantau riwayat servis motor Anda dengan lebih mudah dan terorganisir.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: AppColors.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -216,12 +209,15 @@ class _SignUpPageState extends State<SignUpPage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             _LabeledField(
-                              label: 'Nama Lengkap',
+                              label: 'Username',
                               child: TextFormField(
                                 controller: _fullNameController,
                                 enabled: !_isLoading,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                ),
                                 decoration: _inputDecoration(
-                                  hintText: 'Masukkan nama...',
+                                  hintText: 'Masukkan nama',
                                   prefixIcon: Icons.person_outline,
                                 ),
                               ),
@@ -233,6 +229,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                 controller: _emailController,
                                 enabled: !_isLoading,
                                 keyboardType: TextInputType.emailAddress,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                ),
                                 decoration: _inputDecoration(
                                   hintText: 'contoh@email.com',
                                   prefixIcon: Icons.mail_outline,
@@ -246,6 +245,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                 controller: _passwordController,
                                 enabled: !_isLoading,
                                 obscureText: _isPasswordObscured,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                ),
                                 decoration: _inputDecoration(
                                   hintText: 'Min. 8 karakter',
                                   prefixIcon: Icons.lock_outline,
@@ -276,6 +278,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                 controller: _confirmPasswordController,
                                 enabled: !_isLoading,
                                 obscureText: _isConfirmPasswordObscured,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                ),
                                 decoration: _inputDecoration(
                                   hintText: 'Ulangi password',
                                   prefixIcon: Icons.lock_outline,

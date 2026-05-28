@@ -170,19 +170,15 @@ class _LoginPageState extends State<LoginPage> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 24),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              'Masuk',
-                              style: theme.textTheme.displayMedium?.copyWith(
+                              'motoservis',
+                              style: GoogleFonts.poppins(
+                                fontSize: 36,
                                 color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Masuk untuk memantau riwayat servis motor Anda dengan lebih mudah dan terorganisir.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: AppColors.onSurfaceVariant,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.56,
                               ),
                             ),
                           ],
@@ -198,6 +194,9 @@ class _LoginPageState extends State<LoginPage> {
                                 controller: _emailController,
                                 enabled: !_isLoading,
                                 keyboardType: TextInputType.emailAddress,
+                                style: const TextStyle(
+                                  fontSize: 16
+                                ),
                                 decoration: _inputDecoration(
                                   hintText: 'contoh@email.com',
                                   prefixIcon: Icons.mail_outline,
@@ -211,6 +210,9 @@ class _LoginPageState extends State<LoginPage> {
                                 controller: _passwordController,
                                 enabled: !_isLoading,
                                 obscureText: _isPasswordObscured,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                ),
                                 decoration: _inputDecoration(
                                   hintText: 'Masukkan password',
                                   prefixIcon: Icons.lock_outline,

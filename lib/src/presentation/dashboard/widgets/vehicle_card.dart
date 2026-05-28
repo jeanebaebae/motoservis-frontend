@@ -138,11 +138,6 @@ class VehicleCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.more_vert),
-                      color: AppColors.onSurfaceVariant,
-                      onPressed: () {},
-                    ),
                   ],
                 ),
               ),
