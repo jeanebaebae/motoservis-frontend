@@ -161,7 +161,7 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
         titleSpacing: 0,
         title: Text(
-          'Buat Akun Baru',
+          'Daftar',
           style: theme.textTheme.headlineSmall?.copyWith(
             color: AppColors.primary,
           ),
@@ -319,7 +319,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                   textStyle: theme.textTheme.headlineSmall
                                       ?.copyWith(color: AppColors.onPrimary),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(24),
                                   ),
                                   elevation: 0,
                                 ),

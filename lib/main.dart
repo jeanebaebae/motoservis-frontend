@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
     final session = Supabase.instance.client.auth.currentSession;
 
     return MaterialApp(
-      title: 'MotoServis',
+      title: 'Motoservis',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: session == null ? const OnboardingPage() : const DashboardPage(),

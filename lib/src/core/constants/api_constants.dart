@@ -1,7 +1,5 @@
 class ApiConstants {
   // Android emulator
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl = 'motoservis-backend.vercel.app';
 
-  // Kalau run di Chrome/Windows desktop, ganti jadi:
-  // static const String baseUrl = 'http://localhost:5000/api';
 }

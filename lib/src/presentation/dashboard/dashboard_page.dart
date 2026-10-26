@@ -60,14 +60,6 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             const Icon(Icons.motorcycle, color: AppColors.primary, size: 28),
             const SizedBox(width: 8),
-            Text(
-              'motoservis',
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
-            ),
           ],
         ),
         actions: [
